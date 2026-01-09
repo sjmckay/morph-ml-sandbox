@@ -19,6 +19,7 @@ class GalaxyMorphologyTrainer:
         self,
         model: nn.Module,
         device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
+        checkpoint_dir: str = './checkpoints'
     ):
         """
         Initialize trainer.
@@ -30,6 +31,8 @@ class GalaxyMorphologyTrainer:
         """
         self.model = model.to(device)
         self.device = device
+        self.checkpoint_dir = Path(checkpoint_dir)
+        self.checkpoint_dir.mkdir(exist_ok=True)
         
         self.best_val_loss = float('inf')
         self.train_history = {
@@ -149,6 +152,7 @@ class GalaxyMorphologyTrainer:
             # Save best model
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
+                self.save_checkpoint(epoch, is_best=True)
             
             if (epoch + 1) % 10 == 0 or epoch == 0:
                 print(f"Epoch [{epoch + 1}/{num_epochs}] | "
@@ -158,6 +162,29 @@ class GalaxyMorphologyTrainer:
                       f"Val F1: {val_f1:.4f}")
         
         print("Training complete!")
+    
+    def save_checkpoint(self, epoch: int, is_best: bool = False):
+        """Save model checkpoint."""
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'history': self.train_history
+        }
+        
+        filename = self.checkpoint_dir / f"checkpoint_epoch_{epoch}.pt"
+        torch.save(checkpoint, filename)
+        
+        if is_best:
+            best_filename = self.checkpoint_dir / "best_model.pt"
+            torch.save(checkpoint, best_filename)
+            print(f"Saved best model at epoch {epoch}")
+    
+    def load_checkpoint(self, checkpoint_path: str):
+        """Load model from checkpoint."""
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.train_history = checkpoint.get('history', self.train_history)
+        print(f"Loaded checkpoint from {checkpoint_path}")
     
     def evaluate(
         self,
@@ -266,7 +293,7 @@ def main(use_transformer: bool = False):
         model = TransformerClassifier(input_dim=64*64, num_classes=3)
 
     # Train
-    trainer = GalaxyMorphologyTrainer(model, checkpoint_dir='./checkpoints')
+    trainer = GalaxyMorphologyTrainer(model, checkpoint_dir='./.tmp_checkpoints')
     trainer.train(
         train_loader,
         val_loader,
@@ -276,9 +303,14 @@ def main(use_transformer: bool = False):
     
     # Evaluate
     print("\nEvaluating on test set...")
+    trainer.load_checkpoint('./.tmp_checkpoints/best_model.pt')
     results = trainer.evaluate(test_loader, class_names=['Elliptical', 'Spiral', 'Irregular'])
     
-    print(f"Results : {results}")
+    # Save results
+    results_file = Path('./.tmp_checkpoints/results.json')
+    with open(results_file, 'w') as f:
+        json.dump(results, f, indent=2)
+    print(f"Results saved to {results_file}")
 
 
 if __name__ == '__main__':
