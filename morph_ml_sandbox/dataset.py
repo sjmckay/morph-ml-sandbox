@@ -102,25 +102,27 @@ class GalaxyDataset(Dataset):
         # Convert to polar coordinates
         dx = x - center[1]
         dy = y - center[0]
-        r = np.sqrt(dx**2 + dy**2)
         theta = np.arctan2(dy, dx)
         
         radius = min(self.image_size) // 4
-        
+        axis_ratio = np.random.uniform(0.3, 1.0)
+
+        r_x = (x - center[1]) / radius
+        r_y = (y - center[0]) / (radius * axis_ratio)
+
         # Disk component
-        disk = np.exp(-(r / radius))
-        
-        # Spiral arms (2-4 arms)
-        num_arms = np.random.randint(2, 5)
+        disk = np.exp(-((r_x**2 + r_y**2)))
+        r = np.sqrt(r_x**2 + r_y**2)
+
+        # Spiral arms (1-3 arms)
+        num_arms = np.random.randint(1, 4)
         spiral_phase = np.random.uniform(0, 2*np.pi)
-        
-        # Logarithmic spiral: theta_offset = a * log(r)
         a = np.random.uniform(0.2, 0.5)
-        theta_offset = a * np.log(r + 1)
+        theta_offset = a * 5*np.log(r + 1)
         
         # Create spiral pattern
         arm_pattern = np.cos(num_arms * (theta - theta_offset - spiral_phase))**2
-        arm_modulation = 1.0 + 0.5 * arm_pattern
+        arm_modulation = 1.0 + 0.2 * arm_pattern
         
         galaxy = disk * arm_modulation
         
@@ -148,12 +150,8 @@ class GalaxyDataset(Dataset):
             clump = brightness * np.exp(-((x - cx)**2 + (y - cy)**2) / (2 * sigma**2))
             galaxy += clump
         
-        # Normalize and add random distortion
+        # Normalize
         galaxy /= (galaxy.max() + 1e-8)
-        
-        # Add asymmetric distortion
-        distortion = np.random.normal(0, 0.1, self.image_size)
-        galaxy = galaxy + 0.2 * distortion
         
         return galaxy
     

@@ -19,7 +19,6 @@ class GalaxyMorphologyTrainer:
         self,
         model: nn.Module,
         device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
-        checkpoint_dir: str = './checkpoints'
     ):
         """
         Initialize trainer.
@@ -31,8 +30,6 @@ class GalaxyMorphologyTrainer:
         """
         self.model = model.to(device)
         self.device = device
-        self.checkpoint_dir = Path(checkpoint_dir)
-        self.checkpoint_dir.mkdir(exist_ok=True)
         
         self.best_val_loss = float('inf')
         self.train_history = {
@@ -129,7 +126,6 @@ class GalaxyMorphologyTrainer:
             mode='min',
             factor=0.5,
             patience=5,
-            verbose=True
         )
         
         print(f"Training on {self.device}")
@@ -153,7 +149,6 @@ class GalaxyMorphologyTrainer:
             # Save best model
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
-                self.save_checkpoint(epoch, is_best=True)
             
             if (epoch + 1) % 10 == 0 or epoch == 0:
                 print(f"Epoch [{epoch + 1}/{num_epochs}] | "
@@ -163,29 +158,6 @@ class GalaxyMorphologyTrainer:
                       f"Val F1: {val_f1:.4f}")
         
         print("Training complete!")
-    
-    def save_checkpoint(self, epoch: int, is_best: bool = False):
-        """Save model checkpoint."""
-        checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
-            'history': self.train_history
-        }
-        
-        filename = self.checkpoint_dir / f"checkpoint_epoch_{epoch}.pt"
-        torch.save(checkpoint, filename)
-        
-        if is_best:
-            best_filename = self.checkpoint_dir / "best_model.pt"
-            torch.save(checkpoint, best_filename)
-            print(f"Saved best model at epoch {epoch}")
-    
-    def load_checkpoint(self, checkpoint_path: str):
-        """Load model from checkpoint."""
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.train_history = checkpoint.get('history', self.train_history)
-        print(f"Loaded checkpoint from {checkpoint_path}")
     
     def evaluate(
         self,
@@ -247,7 +219,7 @@ class GalaxyMorphologyTrainer:
         return results
 
 
-def main():
+def main(use_transformer: bool = False):
     """Main training script."""
     # Hyperparameters
     BATCH_SIZE = 32
@@ -257,7 +229,8 @@ def main():
     VAL_SIZE = 500
     TEST_SIZE = 500
     IMAGE_SIZE = (64, 64)
-    SEED = 42
+    SEED = 100
+
     
     # Set random seed for reproducibility
     np.random.seed(SEED)
@@ -285,9 +258,13 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
     
     # Create model
-    print("Initializing SimpleCNN model...")
-    model = SimpleCNNClassifier(input_channels=1, num_classes=3)
-    
+    if not use_transformer:
+        print("Initializing SimpleCNN model...")
+        model = SimpleCNNClassifier(input_channels=1, num_classes=3)
+    else:
+        print("Initializing Transformer model...")
+        model = TransformerClassifier(input_dim=64*64, num_classes=3)
+
     # Train
     trainer = GalaxyMorphologyTrainer(model, checkpoint_dir='./checkpoints')
     trainer.train(
@@ -299,15 +276,10 @@ def main():
     
     # Evaluate
     print("\nEvaluating on test set...")
-    trainer.load_checkpoint('./checkpoints/best_model.pt')
     results = trainer.evaluate(test_loader, class_names=['Elliptical', 'Spiral', 'Irregular'])
     
-    # Save results
-    results_file = Path('./checkpoints/results.json')
-    with open(results_file, 'w') as f:
-        json.dump(results, f, indent=2)
-    print(f"Results saved to {results_file}")
+    print(f"Results : {results}")
 
 
 if __name__ == '__main__':
-    main()
+    main(use_transformer=False)  # Set to True to use Transformer model
