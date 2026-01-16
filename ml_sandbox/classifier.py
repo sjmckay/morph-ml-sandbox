@@ -22,26 +22,4 @@ class SimpleCNNClassifier(nn.Module):
         x = self.fc2(x)
         return x
 
-
-class TransformerClassifier(nn.Module):
-    """A simple Transformer-based classifier for image data.
-    """
-    def __init__(self, input_dim=64*64, num_classes=2, num_heads=4, num_layers=2, dim_feedforward=256):
-        super(TransformerClassifier, self).__init__()
-        self.input_dim = input_dim
-        self.embedding = nn.Linear(input_dim, dim_feedforward)
-        encoder_layer = nn.TransformerEncoderLayer(d_model=dim_feedforward, nhead=num_heads, dim_feedforward=dim_feedforward)
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        self.fc_out = nn.Linear(dim_feedforward, num_classes)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.5)
-
-    def forward(self, x):
-        x = x.view(x.size(0), -1)  # Flatten the input
-        x = self.embedding(x).unsqueeze(1)  # Add sequence dimension
-        x = self.transformer_encoder(x)
-        x = x.mean(dim=1)  # Global average pooling
-        x = self.dropout(self.relu(x))
-        x = self.fc_out(x)
-        return x
     
