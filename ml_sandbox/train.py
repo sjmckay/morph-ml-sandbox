@@ -8,8 +8,8 @@ from pathlib import Path
 import json
 from typing import Dict, Tuple, List
 
-from morph_ml_sandbox.classifier import SimpleCNNClassifier, TransformerClassifier
-from morph_ml_sandbox.dataset import GalaxyDataset
+from ml_sandbox.classifier import SimpleCNNClassifier, TransformerClassifier
+from ml_sandbox.dataset import GalaxyDataset
 
 
 class GalaxyMorphologyTrainer:

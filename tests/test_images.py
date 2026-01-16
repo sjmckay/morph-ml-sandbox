@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
-from morph_ml_sandbox.dataset import GalaxyDataset
+from ml_sandbox.dataset import GalaxyDataset
 
 
 def visualize_sample_images(dataset: GalaxyDataset, num_images: int = 9):

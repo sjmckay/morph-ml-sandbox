@@ -2,8 +2,8 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 
-from morph_ml_sandbox.classifier import SimpleCNNClassifier
-from morph_ml_sandbox.dataset import GalaxyDataset
+from ml_sandbox.classifier import SimpleCNNClassifier
+from ml_sandbox.dataset import GalaxyDataset
 
 SEED = 999
 

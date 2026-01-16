@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from morph_ml_sandbox.classifier import SimpleCNNClassifier, TransformerClassifier
-from morph_ml_sandbox.dataset import GalaxyDataset
+from ml_sandbox.classifier import SimpleCNNClassifier, TransformerClassifier
+from ml_sandbox.dataset import GalaxyDataset
 
 
 class TestGalaxyDataset(unittest.TestCase):
@@ -174,7 +174,7 @@ class TestTrainingLoop(unittest.TestCase):
     
     def test_training_loop_cnn(self):
         """Test that the training loop runs without errors."""
-        from morph_ml_sandbox.train import main
+        from ml_sandbox.train import main
         
         try:
             main(use_transformer=False)  # Use CNN for faster testing
@@ -183,7 +183,7 @@ class TestTrainingLoop(unittest.TestCase):
 
     def test_training_loop_transformer(self):
         """Test that the training loop runs without errors for Transformer."""
-        from morph_ml_sandbox.train import main
+        from ml_sandbox.train import main
         
         try:
             main(use_transformer=True)  # Use Transformer for testing
