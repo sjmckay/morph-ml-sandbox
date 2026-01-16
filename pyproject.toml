@@ -3,8 +3,8 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "morph-ml-sandbox"
-version = "0.1.0"
+name = "ml-sandbox"
+version = "0.1.1"
 description = "Galaxy morphology classification and machine learning sandbox"
 readme = "README.md"
 requires-python = ">=3.8"
